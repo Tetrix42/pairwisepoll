@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poll: {{title}}</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #fff;}
+        
+        h1 { text-align: center; color: #444; border-bottom: 2px solid #ddd; padding-bottom: 5px;}
+        p{ text-align: center; color: #444; padding-bottom: 10px;}
+        img{ width: 100%;}
+        
+        .card-container { 
+            display: flex; gap: 5px; margin-top: 10px; 
+            flex-wrap: wrap; justify-content: space-between;
+	    position: relative;
+        }
+
+        .user-card { 
+            border: 2px solid #eee; padding: 3px; border-radius: 10px; 
+            width: 45%; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+	    display: flex; flex-direction: column; 
+            flex-wrap: wrap; justify-content: space-between;
+        }
+
+	@keyframes fade{
+
+	    0% {
+		opacity: 1;
+	    }
+	    50% {
+		opacity: 0;
+	    }
+	    100% {
+		opacity: 1;
+	    }
+	}
+	.fade{
+		    animation: fade 0.5s;  
+	}
+
+        .user-card:hover { transform: translateY(-5px); border-color: #007bff; }
+        
+        .user-name { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .user-email { font-size: 14px; color: #888; font-style: italic; }
+
+        button.select-btn {
+            background-color: #28a745; color: white; border: none; 
+            padding: 10px; width: 100%; margin-bottom: 15px; cursor: pointer; border-radius: 5px; font-size: 16px;
+        }
+        button.select-btn:hover { background-color: #218838; }
+
+        button.vertical-btn {
+            background-color: #28a745; color: white; border: none; 
+            padding: 10px; width: 4%; margin-bottom: 15px; cursor: pointer; border-radius: 5px; font-size: 16px;
+	      word-wrap: break-word;
+        }
+        button.vertical-btn:hover { background-color: #218838; }
+
+
+        .loading { text-align: center; color: #999; margin-top: 50px;}
+    </style>
+</head>
+<body>
+
+	<h1>{{title}}</h1>
+	<p>{{question}}</p>
+	continue with your vote ID: <input type="text" id="voterId" placeholder="enter anything"> <button tpye="button" onclick="loadRandomUsers()" >resume</button>
+	<div id="counts"></div>
+    
+    <!-- Selection Area -->
+    <div id="selection-area" class="card-container">
+        <div class="loading">Loading entrues...</div>
+    </div>
+    <hr>
+    <div>
+    results: <a href="../results/{{uuid}}">Results</a> 
+    </div>
+
+    <script>
+	var files = new Array();
+        async function loadRandomUsers() {
+	    files = new Array();
+            try {
+		const voterId = document.getElementById('voterId').value;
+		const response = await fetch(`../api/random-select/{{uuid}}?voterId=${voterId}`);
+                
+                // Check if server returned an error (too few users)
+                if(response.status === 400) {
+                    document.getElementById('selection-area').innerHTML = '<p style="text-align:center; padding:50px;">Not enough options in database yet. Please add some to the poll.</p>';
+                    return;
+                }
+
+                const data = await response.json();
+		const users = data.choices;
+		const count = data.count;
+		const notvoted = data.notvoted;
+                
+		console.log(users);
+		files.push(users[0].file);
+		files.push(users[1].file);
+
+                let html = '';
+                    html += `
+                    <div class="user-card">
+			<img src="../${users[0].file}" onclick="saveSelection('10')">
+                        <button class="select-btn" onclick="saveSelection('10')">Select Me</button>
+                    </div>`;
+		html += `<button class="vertical-btn" onclick="saveSelection('11')">Tie </button>`;
+                    html += `
+                    <div class="user-card">
+			<img src="../${users[1].file}" onclick="saveSelection('01')">
+                        <button class="select-btn" onclick="saveSelection('01')">Select Me</button>
+                    </div>`;
+
+		console.log(count);
+		console.log(notvoted);
+		if (count != 0){
+			document.getElementById('counts').innerHTML = `resuming with ${count} submissions` ;
+			if (notvoted != 0){
+					    document.getElementById('counts').innerHTML = `resuming with ${count} submissions. <b>Still ${notvoted} options to view.</b>` ;
+				    }
+		}else{
+			document.getElementById('counts').innerHTML = `` ;
+		}
+
+
+                document.getElementById('selection-area').innerHTML = html || '<p style="padding:20px; text-align:center;">Could not load 2 options.</p>';
+		var container = document.getElementById("selection-area");
+                container.classList.remove("fade");
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('selection-area').innerHTML = '<p style="text-align:center; color:red;">Connection Error. Check the server is running on port 5000.</p>';
+            }
+        }
+
+
+function makeid(length) {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+        async function saveSelection(selected) {
+		console.log(files);
+		console.log(selected);
+	    if(files.length != 2){
+		    alert("there was something wrong loading the selection.");
+		    return;
+	    }
+		var container = document.getElementById("selection-area");
+
+                voterId = document.getElementById('voterId').value;
+		if(voterId === "") {
+		    if(confirm(`You can proceed, but will generate a new Vote ID.\nCancel to enter your existing Vote ID`)) {
+			voterId = makeid(8);
+			document.getElementById('voterId').value = voterId;
+		    }else{
+		      return;
+		    }
+		}
+		console.log(voterId);
+
+                container.classList.add("fade");
+
+		//const other = (files[0] === selected) ? files[1] : files[0];
+		//console.log(other);
+
+		let p1 = 0;
+		let p2 = 0;
+		switch (selected){
+			case "10":
+				p1 = 1;
+				break;
+			case "01":
+				p2 = 1;
+				break;
+			case "11":
+				p1 = 1;
+				p2 = 1;
+				break;
+			default:
+				    loadRandomUsers(); // Reload to refresh selection
+				return;
+		}
+
+
+            //if(confirm(`Are you sure you want to select? This saves your choice.`)) {
+		const response = await fetch(`../api/choose/{{uuid}}?s1=${files[0]}&s2=${files[1]}&p1=${p1}&p2=${p2}&voter=${voterId}`, { method: 'POST' });
+                
+                if (response.ok) {
+                    //alert("Great! You have successfully selected a user from the database.");
+                    loadRandomUsers(); // Reload to refresh selection
+                } else {
+                    alert("Failed to save selection.");
+                }
+            //}
+        }
+
+        // Load data when page opens
+        loadRandomUsers();
+    </script>
+</body>
+</html>
+

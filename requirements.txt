@@ -1,0 +1,11 @@
+flask
+sqlite3
+datetime
+uuid
+os
+werkzeug
+subprocess
+random
+numpy
+openskill
+scypy

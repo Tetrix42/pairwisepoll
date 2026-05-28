@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poll Entry</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        h2 { margin-top: 0; color: #333; }
+        input[type="text"], input[type="email"] { width: 90%; padding: 10px; margin: 5px auto; display: block; border: 1px solid #ccc; border-radius: 4px; text-align: center;}
+        
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        
+        button { background: #007bff; color: white; border: none; padding: 12px; font-size: 14px; cursor: pointer; border-radius: 4px; transition: background 0.3s;}
+        button:hover { background: #0056b3; }
+        
+        .role-btn.admin { background: #dc3545; } /* Red for Admin */
+        .role-btn.create { background: #cca545; } /* Red for Admin */
+        .role-btn.participant { background: #28a745; } /* Green for Participant */
+
+        .dashed_line {
+            width: 100%;
+            height: 3px;
+            border-top: 1px dashed black;
+            line-height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Select Poll Access</h2>
+    <p>Please enter the Poll ID to continue.</p>
+    
+    <input type="text" id="pollInput" placeholder="Enter Poll ID (e.g. 1)">
+    <br>
+    <button class="role-btn participant" onclick="navigate('poll')">Participante</button>
+    <br>
+
+    <br>
+    <br>
+    <div class="dashed_line"></div>
+    <p style="font-size: 12px; color: #888; margin-top: 15px;">
+        Edit rights require the unique edit key.<br>
+    </p>
+
+    <input type="text" id="pollKey" placeholder="Edit Key">
+    <br>
+    <button class="role-btn admin" onclick="navigate('admin')">Edit a Poll</button>
+    <br>
+    <br>
+    <hr>
+    <p style="font-size: 12px; color: #888; margin-top: 15px;">
+    	Create a new Poll:
+    </p>
+        <button class="role-btn create" onclick="create()">Create a new Poll</button>
+</div>
+
+<script>
+    // When page loads, we redirect if a URL parameter exists (e.g. ?poll_id=1&role=participant)
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    const pollId = urlParams.get('poll_id');
+    const role = urlParams.get('role');
+
+    // If the user comes via direct link, autofill if needed, but wait for button click to validate
+    if (pollId) {
+        document.getElementById('pollInput').value = pollId;
+    }
+
+    async function navigate(role) {
+        const id = document.getElementById('pollInput').value;
+        const key = document.getElementById('pollKey').value;
+        
+        if (!id) return alert("Please enter a Poll ID.");
+        if (role === "admin") {
+            if(!key) return alert("Please enter a Edit Key.");
+	}
+
+        try {
+            let success = false;
+
+            // 1. Validate that the Poll actually exists before redirecting
+            // We use the view endpoint to check existence. If status is 404, poll doesn't exist.
+		const response = await fetch(`./${role}/${id}`); 
+            
+            if (response.status === 200) {
+                // Poll Exists! Redirect based on Role chosen
+			    window.location.href = `./${role}/${id}?key=${key}`;
+            } else if (response.status === 404) {
+                alert("Error: This Poll ID does not exist.");
+            } else {
+                alert("Unexpected Error");
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("Could not verify Poll ID.");
+        }
+    }
+
+    async function create() {
+        const response = await fetch(`./api/new_poll`); 
+	console.log(response)
+	if (response.status === 201) {
+		const poll = await response.json();
+		console.log(poll)
+		window.location.href = `admin/${poll.id}?key=${poll.key}`;
+	}
+
+    }
+
+</script>
+
+</body>
+</html>
+
