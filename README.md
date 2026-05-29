@@ -1,10 +1,12 @@
 # Pairwise Poll
-Pairwise Poll collects the opinion over a large set of answers by simple pair-to-pair comparisons.
-Use it alone or with peers to identify your favourite option.
+Pairwise Poll collects the opinion over a large set of answers by simple pair-to-pair (this-or-that) comparisons.
+Use it alone or with peers to identify your favourite option or even hold a vote.
 
 
 ## fetures:
-Try the Demo: https://demo.tetrix42.de/pairwisepoll/admin/c681e6c6?key=46984206a7d76ba7cea68c556ba14a00
+Try the Demo:
+start a new poll: https://demo.tetrix42.de/pairwisepoll/
+try an existing poll:: https://demo.tetrix42.de/pairwisepoll/admin/c681e6c6?key=46984206a7d76ba7cea68c556ba14a00
 
  * simple pairwise comparisons to find good ranking for large set of options
  * ranking based on OpenSkill
