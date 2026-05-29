@@ -277,9 +277,9 @@ def get_not_voted(uuid, voterId):
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
         if(voterId == None or voterId == ""):
-            c.execute("select file from users left join selections on (file == option1 or file == option2 ) and users.uuid == ? where option1 is NULL or option2 is NULL;", [(uuid)]) # Selects all columns
+            c.execute("select file from users left join selections on (file == option1 or file == option2 ) and users.uuid == ? where (option1 is NULL or option2 is NULL) and users.uuid == ?;", [(uuid),(uuid)]) # Selects all columns
         else:
-            c.execute("select file from users left join selections on (file == option1 or file == option2 ) and users.uuid == ? and voter == ? where option1 is NULL or option2 is NULL;", [(uuid), (voterId)]) # Selects all columns
+            c.execute("select file from users left join selections on (file == option1 or file == option2 ) and users.uuid == ? and voter == ? where (option1 is NULL or option2 is NULL) and users.uuid == ?;", [(uuid), (voterId), (uuid)]) # Selects all columns
         notvoted = c.fetchall()
         #print("not voted:", notvoted)
         conn.close()
@@ -304,13 +304,7 @@ def get_results(uuid):
             c.execute("SELECT option1, points1, option2, points2  FROM selections WHERE uuid == ? and voter == ? ORDER BY id DESC", [(uuid), (voterId)]) # Selects all columns
         rows = c.fetchall()
         
-
-        if(voterId == None or voterId == ""):
-            c.execute("select file from users left join selections on (file == option1 or file == option2 ) and users.uuid == ? where option1 is NULL or option2 is NULL;", [(uuid)]) # Selects all columns
-        else:
-            c.execute("select file from users left join selections on (file == option1 or file == option2 ) and users.uuid == ? and voter == ? where option1 is NULL or option2 is NULL;", [(uuid), (voterId)]) # Selects all columns
-        notvoted = c.fetchall()
-        #print("not voted:", notvoted)
+        notvoted = get_not_voted(uuid, voterId)
         conn.close()
     except Exception as e:
         print(e)
